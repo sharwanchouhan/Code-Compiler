@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>JavaScript Online Compiler</title>
+<link rel="stylesheet" href="./Style.css">
+
+</head>
+
+<body>
+
+<header>JavaScript Online Compiler</header>
+
+<div class="container">
+
+    <!-- Editor Pane -->
+    <div class="editor-section">
+        <div class="title">main.js</div>
+
+        <textarea id="code">
+
+            Type any Code
+    
+        </textarea>
+
+        <button class="run-btn" onclick="runCode()">▶ Run</button>
+        <button class="run-btn" onclick="toggleSpeech()">Speek Now</button>
+<button class="run-btn" style="background:#28a745;" onclick="toggleVoice()">Voice</button>
+
+    </div>
+
+    <!-- Output Pane -->
+    <div class="output-section">
+        <div class="title">Output</div>
+
+        <div id="output"></div>
+    </div>
+
+</div>
+
+<script>
+function runCode() {
+    const code = document.getElementById("code").value;
+    const output = document.getElementById("output");
+    output.innerHTML = "";
+
+    try {
+        let result = "";
+        const oldLog = console.log;
+
+        console.log = (...msg) => {
+            result += msg.join(" ") + "\n";
+        };
+
+        eval(code); // Run JS Code
+
+        console.log = oldLog;
+
+        output.textContent = result || "(No output)";
+    } catch (e) {
+        output.textContent = "❌ Error: " + e.message;
+    }
+}
+
+
+
+let recognition;
+let listening = false;
+
+function toggleVoice() {
+    if (listening) {
+        recognition.stop();
+        listening = false;
+        document.getElementById("output").textContent = "🛑 Voice Typing Stopped";
+        return;
+    }
+
+    // Browser support check
+    if (!("webkitSpeechRecognition" in window)) {
+        alert("Your Browser Does NOT Support Voice Typing!");
+        return;
+    }
+
+    recognition = new webkitSpeechRecognition();
+recognition.lang = "en-US";  
+    recognition.interimResults = true; 
+    recognition.continuous = true;     
+
+    recognition.start();
+    listening = true;
+
+    document.getElementById("output").textContent = "🎤 Listening... (Speak Now)";
+
+speechRecognition.onresult = (event) => {
+    let text = "";
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+        if (event.results[i].isFinal) {  // ✅ केवल final result
+            text += event.results[i][0].transcript;
+        }
+    }
+
+    if (text) {
+        let codeBox = document.getElementById("code");
+        codeBox.value += "\n" + text;
+        document.getElementById("output").textContent = "Typed: " + text;
+    }
+};
+
+
+    recognition.onerror = () => {
+        document.getElementById("output").textContent = "❌ Voice Error!";
+    };
+}
+
+let speechRecognition;
+let isRecording = false;
+
+function toggleSpeech() {
+    if (!("webkitSpeechRecognition" in window)) {
+        alert("Your Browser Does NOT Support Voice Typing!");
+        return;
+    }
+
+    if (isRecording) {
+        // Stop recording
+        speechRecognition.stop();
+        isRecording = false;
+        document.getElementById("output").textContent = "🛑 Recording Stopped";
+        return;
+    }
+
+    // Start recording
+    speechRecognition = new webkitSpeechRecognition();
+    speechRecognition.lang = "en-US";  // या "hi-IN" अगर हिंदी चाहिए
+    speechRecognition.interimResults = true;
+    speechRecognition.continuous = true;
+
+    speechRecognition.start();
+    isRecording = true;
+    document.getElementById("output").textContent = "🎤 Recording... Speak Now";
+
+    speechRecognition.onresult = (event) => {
+        let text = event.results[event.results.length - 1][0].transcript;
+
+        // Add spoken text to code editor
+        let codeBox = document.getElementById("code");
+        codeBox.value += "\n" + text;
+
+        document.getElementById("output").textContent = "Typed: " + text;
+    };
+
+    speechRecognition.onerror = (e) => {
+        document.getElementById("output").textContent = "❌ Voice Error!";
+        isRecording = false;
+    };
+
+    speechRecognition.onend = () => {
+        // Automatically mark as stopped if user stops
+        isRecording = false;
+        document.getElementById("output").textContent = "🛑 Recording Stopped";
+    };
+}
+
+
+
+
+</script>
+
+</body>
+</html>
